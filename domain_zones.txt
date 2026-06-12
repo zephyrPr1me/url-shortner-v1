@@ -1,0 +1,6 @@
+.com, .net, .org, .info, .biz, .icu, .top, .xyz
+.ru, .рф, .su, .kz, .by, .uz, .ua, .de, .cn, .uk, .us, .eu
+.ai, .io, .tech, .dev, .app, .software, .systems, .online, .site, .website
+.shop, .store, .solutions, .agency, .pro, .market, .co, .ltd, .company
+.me, .blog, .club, .tv, .media, .photo, .art, .edu, .gov
+
