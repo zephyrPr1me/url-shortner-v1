@@ -13,7 +13,7 @@ COPY . .
 
 RUN uv sync --frozen
 
-# Финальный этап
+
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
@@ -24,5 +24,5 @@ COPY --from=builder /app /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Запуск приложения через alembic + uvicorn
+
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
