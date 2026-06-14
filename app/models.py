@@ -3,16 +3,10 @@ from datetime import datetime
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import func
-from app.core.database import engine
 
 
 class Base(DeclarativeBase):
     pass
-
-
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 
 class URLModel(Base):

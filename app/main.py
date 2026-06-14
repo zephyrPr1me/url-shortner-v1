@@ -10,7 +10,7 @@ from starlette.responses import RedirectResponse
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.models import URLModel, create_tables
+from app.models import URLModel 
 from app.schemas import URLCreate, URLResponse
 from app.utils.url_check import (
     check_url_domain_zone,
@@ -21,9 +21,7 @@ from app.utils.url_check import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_tables()
     yield
-
 
 app = FastAPI(lifespan=lifespan)
 
