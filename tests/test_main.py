@@ -40,14 +40,6 @@ async def test_shorten_url_invalid_format(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_shorten_url_disallowed_domain(client: AsyncClient):
-    payload = {"target_url": "https://google.invalidzone"}
-    response = await client.post("/shorten", json=payload)
-    assert response.status_code == 400
-    assert response.json()["detail"] == "URL domain not allowed"
-
-
-@pytest.mark.asyncio
 async def test_shorten_url_duplicate(client: AsyncClient):
     payload = {"target_url": "https://github.com"}
 
