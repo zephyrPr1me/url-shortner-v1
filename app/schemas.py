@@ -18,5 +18,5 @@ class URLResponse(URLBase):
 
     model_config = {
         "from_attributes": True,
-        "ser_json_timedelta": "iso8601", 
-        }
+        "ser_json_timedelta": "iso8601",
+    }

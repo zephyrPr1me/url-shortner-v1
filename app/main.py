@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
 from app.core.config import settings
-from app.core.database import get_session
-from app.models import URLModel 
+from app.core.database import async_session, get_session
+from app.models import URLModel
 from app.schemas import URLCreate, URLResponse
 from app.utils.url_check import (
     check_url_domain_zone,
@@ -23,9 +23,14 @@ from app.utils.url_check import (
 async def lifespan(app: FastAPI):
     yield
 
+
 app = FastAPI(lifespan=lifespan)
 
 Session = Annotated[AsyncSession, Depends(get_session)]
+
+
+async def get_session_maker():
+    return async_session
 
 
 @app.get("/")
@@ -54,7 +59,7 @@ async def duplicate_url_check(target_url: str, session: AsyncSession):
 
 @app.post("/shorten", response_model=URLResponse)
 async def shorten_url(url: URLCreate, session: Session):
-    normalized_url = url.target_url
+    normalized_url = str(url.target_url)
     if not check_url_format(normalized_url):
         normalized_url = "https://" + normalized_url
 
@@ -81,6 +86,8 @@ async def shorten_url(url: URLCreate, session: Session):
         "clicks": new_object.clicks,
         "created_at": new_object.created_at,
     }
+
+
 async def increment_clicks(short_id: str, session_maker):
     async with session_maker() as session:
         url = await get_url_by_short_id(short_id, session)
@@ -88,14 +95,19 @@ async def increment_clicks(short_id: str, session_maker):
             url.clicks += 1
             await session.commit()
 
+
 @app.get("/{short_id}")
-async def redirect_url(short_id: str, session: Session, tasks: BackgroundTasks):
+async def redirect_url(
+    short_id: str,
+    session: Session,
+    tasks: BackgroundTasks,
+    session_maker=Depends(get_session_maker),
+):
     url = await get_url_by_short_id(short_id, session)
     if url is None:
         raise HTTPException(status_code=404, detail="URL not found")
-    
-    tasks.add_task(increment_clicks, short_id, get_session)
-    await session.commit()
+
+    tasks.add_task(increment_clicks, short_id, session_maker)
     return RedirectResponse(url=url.original_url)
 
 
