@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 class URLModel(Base):
     __tablename__ = "urls"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    original_url: Mapped[str] = mapped_column(String, nullable=False)
+    original_url: Mapped[str] = mapped_column(String, nullable=False, index=True)
     short_id: Mapped[str] = mapped_column(
         String, unique=True, nullable=False, index=True
     )

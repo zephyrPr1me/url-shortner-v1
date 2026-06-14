@@ -3,7 +3,7 @@ import string
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
@@ -81,14 +81,20 @@ async def shorten_url(url: URLCreate, session: Session):
         "clicks": new_object.clicks,
         "created_at": new_object.created_at,
     }
-
+async def increment_clicks(short_id: str, session_maker):
+    async with session_maker() as session:
+        url = await get_url_by_short_id(short_id, session)
+        if url:
+            url.clicks += 1
+            await session.commit()
 
 @app.get("/{short_id}")
-async def redirect_url(short_id: str, session: Session):
+async def redirect_url(short_id: str, session: Session, tasks: BackgroundTasks):
     url = await get_url_by_short_id(short_id, session)
     if url is None:
         raise HTTPException(status_code=404, detail="URL not found")
-    url.clicks += 1
+    
+    tasks.add_task(increment_clicks, short_id, get_session)
     await session.commit()
     return RedirectResponse(url=url.original_url)
 
