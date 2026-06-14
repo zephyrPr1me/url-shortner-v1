@@ -1,8 +1,6 @@
-from pathlib import Path
 from typing import Optional
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -17,14 +15,19 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
 
-    def __init__(self, **values):
-        super().__init__(**values)
+    # Base URL of this service, used for self-shortening protection.
+    # Override via BASE_URL env variable in production.
+    BASE_URL: str = "http://localhost:8000"
+
+    @model_validator(mode="after")
+    def build_database_url(self) -> "Settings":
         if not self.DATABASE_URL:
             self.DATABASE_URL = (
                 f"postgresql+asyncpg://{self.POSTGRES_USER}:"
                 f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
                 f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
+        return self
 
 
 settings = Settings()
