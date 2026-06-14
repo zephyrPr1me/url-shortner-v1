@@ -8,13 +8,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
-from app.core.config import settings
 from app.core.database import async_session, get_session
 from app.models import URLModel
 from app.schemas import URLCreate, URLResponse
 from app.utils.url_check import (
-    check_url_domain_zone,
-    check_url_format,
+    is_valid_url,
     check_url_length,
 )
 
@@ -60,14 +58,12 @@ async def duplicate_url_check(target_url: str, session: AsyncSession):
 @app.post("/shorten", response_model=URLResponse)
 async def shorten_url(url: URLCreate, session: Session):
     normalized_url = str(url.target_url)
-    if not check_url_format(normalized_url):
-        normalized_url = "https://" + normalized_url
+
+    if not is_valid_url(normalized_url):
+        raise HTTPException(status_code=400, detail="Invalid URL structure")
 
     if not check_url_length(normalized_url):
         raise HTTPException(status_code=400, detail="URL is too long")
-
-    if not check_url_domain_zone(normalized_url, settings.ALLOWED_DOMAINS):
-        raise HTTPException(status_code=400, detail="URL domain not allowed")
 
     if await duplicate_url_check(normalized_url, session):
         raise HTTPException(status_code=400, detail="URL already exists")

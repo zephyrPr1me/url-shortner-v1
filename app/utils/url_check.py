@@ -1,18 +1,19 @@
 from urllib.parse import urlparse
 
 
-def check_url_format(url: str) -> bool:
-    if not url.startswith(("http://", "https://")):
-        return False
-    return True
-
-
 def check_url_length(url: str, max_length: int = 2048) -> bool:
+    """Check if the URL length does not exceed max_length."""
     return len(url) <= max_length
 
 
-def check_url_domain_zone(url: str, allowed_domains_zone: list[str]) -> bool:
-    domain = urlparse(url).hostname
-    if domain is None:
+def is_valid_url(url: str) -> bool:
+    """
+    Perform sanity checks on the URL structure.
+    Pydantic's HttpUrl handles basic RFC validation, but we can verify
+    additional constraints (e.g. hostname/netloc exists).
+    """
+    try:
+        parsed = urlparse(url)
+        return bool(parsed.scheme in ("http", "https") and parsed.netloc)
+    except Exception:
         return False
-    return any(domain.endswith(allowed) for allowed in allowed_domains_zone)
