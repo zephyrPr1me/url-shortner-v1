@@ -24,8 +24,9 @@ def upgrade() -> None:
     op.create_table(
         "urls",
         sa.Column("id", sa.Integer(), primary_key=True, index=True),
-        sa.Column("original_url", sa.String(), nullable=False),
-        sa.Column("short_id", sa.String(6), unique=True, nullable=False),
+        sa.Column("original_url", sa.String(), nullable=False, index=True),
+        sa.Column("short_id", sa.String(), unique=True, nullable=False, index=True),
+        sa.Column("clicks", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("created_at", sa.DateTime(), server_default=sa.func.now()),
     )
 

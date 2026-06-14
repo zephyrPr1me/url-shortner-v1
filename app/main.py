@@ -4,12 +4,13 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, FileResponse
 
 from app.core.config import settings
 from app.core.database import async_session, get_session
@@ -39,6 +40,8 @@ app.add_exception_handler(
     _rate_limit_exceeded_handler,
 )
 
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -48,7 +51,24 @@ async def get_session_maker():
 
 @app.get("/")
 async def home():
-    return {"message": "Welcome to the URL Shortener API!"}
+    return FileResponse("app/static/index.html")
+
+
+@app.get("/urls")
+async def list_urls(session: Session):
+    result = await session.execute(
+        select(URLModel).order_by(desc(URLModel.created_at)).limit(20)
+    )
+    urls = result.scalars().all()
+    return [
+        {
+            "target_url": url.original_url,
+            "short_id": url.short_id,
+            "clicks": url.clicks,
+            "created_at": url.created_at.isoformat(),
+        }
+        for url in urls
+    ]
 
 
 def generate_short_id(length: int = 6):
