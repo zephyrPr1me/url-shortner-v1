@@ -3,18 +3,28 @@ import string
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
+from app.core.config import settings
 from app.core.database import async_session, get_session
 from app.models import URLModel
 from app.schemas import URLCreate, URLResponse
 from app.utils.url_check import (
     is_valid_url,
     check_url_length,
+    check_self_shortening,
 )
+
+# ---------------------------------------------------------------------------
+# Rate limiter — keyed by client IP
+# ---------------------------------------------------------------------------
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
 @asynccontextmanager
@@ -23,6 +33,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 
@@ -56,7 +71,8 @@ async def duplicate_url_check(target_url: str, session: AsyncSession):
 
 
 @app.post("/shorten", response_model=URLResponse)
-async def shorten_url(url: URLCreate, session: Session):
+@limiter.limit("10/minute")
+async def shorten_url(request: Request, url: URLCreate, session: Session):
     normalized_url = str(url.target_url)
 
     if not is_valid_url(normalized_url):
@@ -64,6 +80,12 @@ async def shorten_url(url: URLCreate, session: Session):
 
     if not check_url_length(normalized_url):
         raise HTTPException(status_code=400, detail="URL is too long")
+
+    if check_self_shortening(normalized_url, settings.BASE_URL):
+        raise HTTPException(
+            status_code=400,
+            detail="Shortening links that point to this service is not allowed",
+        )
 
     if await duplicate_url_check(normalized_url, session):
         raise HTTPException(status_code=400, detail="URL already exists")

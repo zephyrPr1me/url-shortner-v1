@@ -40,6 +40,17 @@ async def test_shorten_url_invalid_format(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_shorten_url_self_shortening(client: AsyncClient):
+    """Shortening a link that points back to this service must be rejected."""
+    # The test client's base_url is http://test, which maps to BASE_URL default.
+    # We patch via the known host of the test client.
+    payload = {"target_url": "http://localhost:8000/some-existing-path"}
+    response = await client.post("/shorten", json=payload)
+    assert response.status_code == 400
+    assert "not allowed" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_shorten_url_duplicate(client: AsyncClient):
     payload = {"target_url": "https://github.com"}
 
@@ -51,6 +62,22 @@ async def test_shorten_url_duplicate(client: AsyncClient):
     response2 = await client.post("/shorten", json=payload)
     assert response2.status_code == 400
     assert response2.json()["detail"] == "URL already exists"
+
+
+@pytest.mark.asyncio
+async def test_shorten_url_rate_limiting(client: AsyncClient):
+    """More than 10 requests per minute from same IP should return 429."""
+    responses = []
+    # First 10 should succeed (or 400 for duplicates after the first)
+    # The 11th+ must be 429
+    for i in range(12):
+        r = await client.post(
+            "/shorten",
+            json={"target_url": f"https://example-rate-{i}.com"},
+        )
+        responses.append(r.status_code)
+
+    assert 429 in responses, "Expected a 429 Too Many Requests response"
 
 
 @pytest.mark.asyncio
@@ -72,7 +99,6 @@ async def test_redirect_and_click_tracking(client: AsyncClient, db_session):
     # Re-fetch from db to verify clicks incremented
     stmt = select(URLModel).where(URLModel.short_id == short_id)
     result = await db_session.execute(stmt)
-    # Refresh to avoid cached state
     url_model = result.scalar()
     await db_session.refresh(url_model)
     assert url_model.clicks == 1

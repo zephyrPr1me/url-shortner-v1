@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-from app.main import app, get_session_maker
+from app.main import app, get_session_maker, limiter
 from app.core.database import get_session
 from app.models import Base
 
@@ -48,9 +48,9 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_session] = override_get_session
     app.dependency_overrides[get_session_maker] = override_get_session_maker
 
-    # We also mock or override database configuration in app.main if needed.
-    # Note: app.main has increment_clicks which also needs a session.
-    # We will override or handle it. Let's use ASGITransport.
+    # Reset rate limiter storage so tests are isolated from each other
+    limiter._limiter.storage.reset()
+
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
