@@ -9,7 +9,20 @@ from app.models import URLModel
 async def test_home(client: AsyncClient):
     response = await client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to the URL Shortener API!"}
+    assert response.headers["content-type"].startswith("text/html")
+    assert "<script src=\"/static/script.js\"></script>" in response.text
+    assert "<link rel=\"stylesheet\" href=\"/static/style.css\" />" in response.text
+
+
+@pytest.mark.asyncio
+async def test_static_assets(client: AsyncClient):
+    css_response = await client.get("/static/style.css")
+    js_response = await client.get("/static/script.js")
+
+    assert css_response.status_code == 200
+    assert css_response.headers["content-type"].startswith("text/css")
+    assert js_response.status_code == 200
+    assert js_response.headers["content-type"].startswith("text/javascript")
 
 
 @pytest.mark.asyncio
