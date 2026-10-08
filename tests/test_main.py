@@ -10,8 +10,8 @@ async def test_home(client: AsyncClient):
     response = await client.get("/")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
-    assert "<script src=\"/static/script.js\"></script>" in response.text
-    assert "<link rel=\"stylesheet\" href=\"/static/style.css\" />" in response.text
+    assert '<script src="/static/script.js"></script>' in response.text
+    assert '<link rel="stylesheet" href="/static/style.css" />' in response.text
 
 
 @pytest.mark.asyncio

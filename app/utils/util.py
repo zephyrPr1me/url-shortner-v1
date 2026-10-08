@@ -1,3 +1,5 @@
+import secrets
+import string
 from urllib.parse import urlparse
 
 
@@ -15,7 +17,7 @@ def is_valid_url(url: str) -> bool:
     try:
         parsed = urlparse(url)
         return bool(parsed.scheme in ("http", "https") and parsed.netloc)
-    except Exception:
+    except (TypeError, ValueError):
         return False
 
 
@@ -32,5 +34,10 @@ def check_self_shortening(url: str, base_url: str) -> bool:
         target_host = urlparse(url).hostname or ""
         service_host = urlparse(base_url).hostname or ""
         return target_host == service_host
-    except Exception:
+    except (TypeError, ValueError):
         return False
+
+
+def generate_short_id(length: int = 6):
+    chars = string.ascii_letters + string.digits
+    return "".join(secrets.choice(chars) for _ in range(length))

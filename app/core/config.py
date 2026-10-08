@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -7,7 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
-    DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str | None = None
     DB_ECHO: bool = False
     POSTGRES_USER: str = "myuser"
     POSTGRES_PASSWORD: str = "mysecretpassword123"

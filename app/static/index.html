@@ -1,72 +1,142 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/static/style.css" />
     <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <!-- Подключение Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Настройка Tailwind для поддержки переключения темы по классу
+      tailwind.config = {
+        darkMode: 'class',
+      };
+    </script>
   </head>
-  <body>
-    <div class="container">
+  <body
+    class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen font-sans transition-colors duration-200"
+  >
+    <div class="max-w-2xl mx-auto px-4 py-8 flex flex-col min-h-screen">
       <!-- Header -->
-      <header>
-        <div class="logo">
-          <div class="logo-icon">🔗</div>
-          <span class="logo-text">ShortLink</span>
+      <header class="flex justify-between items-center mb-8">
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md"
+          >
+            🔗
+          </div>
+          <span class="text-xl font-bold tracking-tight">ShortLink</span>
         </div>
+
         <button
-          class="theme-toggle"
+          class="p-2 rounded-xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-xl leading-none"
           id="themeToggle"
           title="Toggle theme"
           aria-label="Toggle theme"
         >
-          🌙
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+            />
+          </svg>
         </button>
       </header>
 
-      <main>
+      <main class="space-y-6 flex-grow">
         <!-- Shorten Form -->
-        <section class="card">
-          <h2 class="card-title">Shorten URL</h2>
-          <form class="url-form" id="shortenForm">
-            <div class="input-group">
+        <section
+          class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+        >
+          <h2 class="text-lg font-semibold mb-4">Shorten URL</h2>
+          <form id="shortenForm">
+            <div class="flex flex-col sm:flex-row gap-3">
               <input
                 type="url"
                 id="urlInput"
                 placeholder="https://example.com/very-long-url"
                 required
                 autofocus
+                class="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
-              <button type="submit" class="btn btn-primary" id="submitBtn">
+              <button
+                type="submit"
+                id="submitBtn"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center min-w-[120px]"
+              >
                 <span id="btnText">Shorten</span>
-                <span id="btnSpinner" class="spinner" style="display: none"></span>
+                <span
+                  id="btnSpinner"
+                  class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"
+                ></span>
               </button>
             </div>
           </form>
         </section>
 
         <!-- Result (hidden by default) -->
-        <section class="card result-card" id="resultCard" style="display: none">
-          <h2 class="card-title">Done!</h2>
-          <div class="result-box">
-            <a href="#" id="resultLink" target="_blank" rel="noopener"></a>
-            <button class="btn-copy" id="copyBtn" data-copied="false">Copy</button>
+        <section
+          id="resultCard"
+          class="hidden bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-green-500/30 dark:border-green-500/20"
+        >
+          <h2 class="text-lg font-semibold mb-4 text-green-600 dark:text-green-400">
+            Done!
+          </h2>
+          <div
+            class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+          >
+            <a
+              href="#"
+              id="resultLink"
+              target="_blank"
+              rel="noopener"
+              class="text-blue-600 dark:text-blue-400 font-medium truncate hover:underline mr-4"
+            ></a>
+            <button
+              id="copyBtn"
+              data-copied="false"
+              class="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-medium rounded-lg transition shrink-0"
+            >
+              Copy
+            </button>
           </div>
         </section>
 
         <!-- History -->
-        <section class="card" id="historyCard">
-          <h2 class="card-title">Your Links</h2>
-          <div class="history-list" id="historyList">
-            <div class="history-empty">No shortened links yet</div>
+        <section
+          id="historyCard"
+          class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+        >
+          <h2 class="text-lg font-semibold mb-4">Your Links</h2>
+          <div id="historyList" class="space-y-3">
+            <div class="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
+              No shortened links yet
+            </div>
           </div>
         </section>
       </main>
 
-      <!-- Toast Notification -->
-      <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+      <!-- Toast Notification (hidden/positioned fixed at the bottom right) -->
+      <div
+        id="toast"
+        role="alert"
+        aria-live="polite"
+        class="fixed bottom-5 right-5 px-4 py-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 rounded-xl shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none text-sm font-medium z-50"
+      ></div>
 
-      <footer>FastAPI URL Shortener &middot; v1.0</footer>
+      <!-- Footer -->
+      <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        FastAPI URL Shortener &middot; v1.0
+      </footer>
     </div>
 
     <script src="/static/script.js"></script>
