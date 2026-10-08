@@ -60,15 +60,18 @@ async def list_urls(session: Session):
         select(URLModel).order_by(desc(URLModel.created_at)).limit(20)
     )
     urls = result.scalars().all()
-    return [
-        {
-            "target_url": url.original_url,
-            "short_id": url.short_id,
-            "clicks": url.clicks,
-            "created_at": url.created_at.isoformat(),
-        }
-        for url in urls
-    ]
+    if urls:
+        return [
+            {
+                "target_url": url.original_url,
+                "short_id": url.short_id,
+                "clicks": url.clicks,
+                "created_at": url.created_at.isoformat(),
+            }
+            for url in urls
+        ]
+    else:
+        return {}
 
 
 def generate_short_id(length: int = 6):
